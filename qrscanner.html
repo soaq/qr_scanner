@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      #scanner {
+        width: 100%;
+        height: 100%;
+      }
+      #loadingMessage {
+        text-align: center;
+        padding: 40px;
+        background-color: #eee;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loadingMessage">Loading camera...</div>
+    <video id="scanner" width="300" height="300" hidden></video>
+    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.6/umd/index.min.js"></script>
+    <script>
+      function onScanSuccess(decodedText) {
+        window.opener.postMessage(decodedText, '*');
+        window.close();
+        alert('QR Code data: ' + decodedText);
+      }
+
+      async function startScanner() {
+        const scannerElement = document.getElementById('scanner');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const codeReader = new ZXing.BrowserQRCodeReader();
+
+        try {
+          console.log("Attempting to render the QR code scanner...");
+          await codeReader.decodeFromVideoDevice(null, scannerElement, (result, error) => {
+            if (result) {
+              onScanSuccess(result.getText());
+            } else if (error && !(error instanceof ZXing.NotFoundException)) {
+              console.error(`Error scanning QR code: ${error}`);
+            }
+          });
+
+          loadingMessage.hidden = true;
+          scannerElement.hidden = false;
+          console.log("QR code scanner successfully rendered.");
+        } catch (error) {
+          loadingMessage.innerText = 'Error: Unable to access the camera. Please check camera permissions.';
+          console.error(`Error starting QR scanner: ${error}`);
+        }
+      }
+
+      window.addEventListener('DOMContentLoaded', startScanner);
+    </script>
+  </body>
+</html>
